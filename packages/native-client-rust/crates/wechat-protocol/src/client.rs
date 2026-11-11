@@ -603,7 +603,7 @@ impl NativeClient {
     ) -> Result<LoginAttempt> {
         device.validate()?;
         ensure!(key_info.len() <= 1024 * 1024, "Invalid saved key-info");
-        let plain = wire::qr_request(&device, computer_name)?;
+        let plain = wire::qr_request(&device, computer_name).context("QR request construction")?;
         let (reply, cookie, key_version) = self.prelogin_rpc(
             &self.options.long_host,
             &self.options.short_host,

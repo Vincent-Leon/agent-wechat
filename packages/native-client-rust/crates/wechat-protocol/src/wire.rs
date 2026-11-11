@@ -1,6 +1,6 @@
 //! Typed numbered business messages for the supported native profile.
 use crate::{crypto::random, protobuf as p, AccountState, DeviceProfile};
-use anyhow::{bail, ensure, Result};
+use anyhow::{bail, ensure, Context, Result};
 use serde::{Deserialize, Serialize};
 use std::{
     collections::{BTreeMap, HashSet},
@@ -33,7 +33,10 @@ pub fn base_request(profile: &DeviceProfile, uin: u32, task: u32) -> Result<Vec<
 pub fn qr_request(profile: &DeviceProfile, computer_name: &str) -> Result<Vec<u8>> {
     p::message(&[
         p::bytes(1, &base_request(profile, 0, 0)?),
-        p::bytes(2, &p::buffer(&random::<16>()?)),
+        p::bytes(
+            2,
+            &p::buffer(&random::<16>().context("QR nonce random")?),
+        ),
         p::uint(3, 0),
         p::bytes(4, text(computer_name, 255, false)?),
     ])
