@@ -722,7 +722,7 @@ pub fn short_exchange(
     let mut response = client
         .post(format!(
             "http://{host}/mmtls/{}",
-            hex::encode(random::<4>()?)
+            hex::encode(random::<4>().context("MMTLS shortlink request nonce")?)
         ))
         .header("Content-Type", "application/octet-stream")
         .header("User-Agent", "MicroMessenger Client")
@@ -804,7 +804,7 @@ pub(crate) async fn short_exchange_interruptible(
     let mut response = client
         .post(format!(
             "http://{host}/mmtls/{}",
-            hex::encode(random::<4>()?)
+            hex::encode(random::<4>().context("MMTLS async shortlink request nonce")?)
         ))
         .header("Content-Type", "application/octet-stream")
         .header("User-Agent", "MicroMessenger Client")
@@ -853,7 +853,9 @@ fn early_hello(ticket: &Ticket) -> Result<(Vec<u8>, Vec<u8>)> {
             VERSION.to_le_bytes().to_vec(),
             vec![1],
             0xa8u16.to_be_bytes().to_vec(),
-            random::<32>()?.to_vec(),
+            random::<32>()
+                .context("MMTLS shortlink hello random")?
+                .to_vec(),
             now.to_be_bytes().to_vec(),
             section(&[vec![1], ext].concat()),
         ]
