@@ -560,7 +560,8 @@ impl NativeClient {
         } else {
             business::profile_for_region(session.certificate_region)?
         };
-        let prepared = Prelogin::prepare(plain, &profile, auth_key)?;
+        let prepared = Prelogin::prepare(plain, &profile, auth_key)
+            .context("MMTLS prelogin construction")?;
         let packet = business::prelogin_packet(&prepared, cgi, profile.version, cookie)?;
         self.check_submission()?;
         let reply = mmtls::short_exchange(
