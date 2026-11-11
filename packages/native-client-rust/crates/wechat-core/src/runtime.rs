@@ -2368,6 +2368,42 @@ fn login_failure_result(error: &anyhow::Error) -> Value {
         }
     });
     let mut result = json!({"code":code,"retryable":false});
+    // The public result used to discard the actual transport/protocol error,
+    // which made a failed QR login impossible to diagnose remotely. Keep a
+    // bounded, local-only error chain, while redacting words that commonly
+    // identify credentials or private profile material.
+    let diagnostic = error
+        .chain()
+        .take(8)
+        .map(|cause| {
+            let mut message = cause.to_string();
+            message.retain(|character| !character.is_control());
+            if message.chars().count() > 512 {
+                message = message.chars().take(512).collect();
+                message.push('…');
+            }
+            let lower = message.to_ascii_lowercase();
+            if [
+                "token",
+                "password",
+                "secret",
+                "authorization",
+                "cookie",
+                "session_key",
+                "request_key",
+            ]
+            .iter()
+            .any(|marker| lower.contains(marker))
+            {
+                "<redacted>".to_owned()
+            } else {
+                message
+            }
+        })
+        .collect::<Vec<_>>();
+    if !diagnostic.is_empty() {
+        result["diagnostic"] = json!(diagnostic);
+    }
     if let Some(
         wechat_profile::ProfileError::KeyMismatch(relative)
         | wechat_profile::ProfileError::KeyUnavailable(relative)
@@ -2628,6 +2664,14 @@ mod tests {
             ));
             assert!(login_failure_result(&error).get("database").is_none());
         }
+    }
+
+    #[test]
+    fn login_failure_diagnostic_is_bounded_and_redacts_credential_words() {
+        let error = anyhow::anyhow!("outer: password=private secret and {}", "x".repeat(1024));
+        let result = login_failure_result(&error);
+        assert_eq!(result["diagnostic"][0], "<redacted>");
+        assert!(result.to_string().len() < 1024);
     }
     pub(super) fn state() -> AccountState {
         AccountState {
