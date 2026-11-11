@@ -246,7 +246,9 @@ impl Session {
         // Resolver and connect are constrained by the caller's blocking worker. Socket
         // read/write deadlines bound every subsequent protocol operation.
         use std::net::ToSocketAddrs;
-        let addresses = (host, 80).to_socket_addrs()?;
+        let addresses = (host, 80)
+            .to_socket_addrs()
+            .context("MMTLS DNS resolution")?;
         let mut socket = None;
         for addr in addresses {
             let remaining = deadline.saturating_duration_since(Instant::now());
