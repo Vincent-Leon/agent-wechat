@@ -717,7 +717,8 @@ pub fn short_exchange(
         .connect_timeout(timeout.min(Duration::from_secs(10)))
         .redirect(reqwest::redirect::Policy::none())
         .no_proxy()
-        .build()?;
+        .build()
+        .context("MMTLS shortlink client build")?;
     let mut response = client
         .post(format!(
             "http://{host}/mmtls/{}",
@@ -730,7 +731,8 @@ pub fn short_exchange(
         .header("Cache-Control", "no-cache")
         .header("Connection", "close")
         .body(wire)
-        .send()?;
+        .send()
+        .context("MMTLS shortlink request")?;
     ensure!(
         response.status() == 200,
         "Native shortlink HTTP status {}",
@@ -797,7 +799,8 @@ pub(crate) async fn short_exchange_interruptible(
         .connect_timeout(timeout.min(Duration::from_secs(10)))
         .redirect(reqwest::redirect::Policy::none())
         .no_proxy()
-        .build()?;
+        .build()
+        .context("MMTLS async shortlink client build")?;
     let mut response = client
         .post(format!(
             "http://{host}/mmtls/{}",
@@ -811,7 +814,8 @@ pub(crate) async fn short_exchange_interruptible(
         .header("Connection", "close")
         .body(wire)
         .send()
-        .await?;
+        .await
+        .context("MMTLS async shortlink request")?;
     ensure!(
         response.status() == 200,
         "Native shortlink HTTP status {}",
