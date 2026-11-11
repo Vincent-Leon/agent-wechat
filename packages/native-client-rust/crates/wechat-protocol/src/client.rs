@@ -30,7 +30,7 @@ pub use account::{
     AccountPushConnection, AccountRequest, AccountStatus, NativeRequestNotSubmitted, PendingLogout,
     TextSendOptions,
 };
-use anyhow::{bail, ensure, Result};
+use anyhow::{bail, ensure, Context, Result};
 pub use logout::*;
 use openssl::{nid::Nid, pkey::PKey, rsa::Rsa};
 pub use revoke::*;
